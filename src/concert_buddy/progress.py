@@ -1,3 +1,5 @@
+"""Progress reporting via Server-Sent Events (SSE)."""
+
 import asyncio
 import json
 from collections import defaultdict
@@ -10,6 +12,7 @@ _EVENT_QUEUES: dict[str, asyncio.Queue[str]] = defaultdict(asyncio.Queue)
 
 
 def get_queue(session_id: str) -> asyncio.Queue[str]:
+    """Get or create the event queue for a session."""
     if session_id not in _EVENT_QUEUES:
         _EVENT_QUEUES[session_id] = asyncio.Queue()
     return _EVENT_QUEUES[session_id]
@@ -21,7 +24,7 @@ async def publish_event(session_id: str, event: dict) -> None:
 
 
 async def sse_event_stream(session_id: str) -> AsyncGenerator[bytes, None]:
-    """Simple SSE generator yielding events for a session."""
+    """Yield events for a session using a simple SSE generator."""
     queue = get_queue(session_id)
     # Send an initial heartbeat so clients connect promptly
     yield b":ok\n\n"
@@ -40,6 +43,7 @@ async def report_todos(session_id: str, todos: list[str]) -> str:
 
     Returns:
         Confirmation string.
+
     """
     await publish_event(session_id, {"type": "todos", "todos": todos})
     return "reported_todos"
@@ -56,6 +60,7 @@ async def update_todo(
         todo: The textual description of the TODO this update refers to.
         status: One of: pending | in_progress | done | error.
         message: Optional additional info for the user.
+
     """
     await publish_event(
         session_id,

@@ -1,18 +1,21 @@
+"""Agent specializing in creating Spotify playlists based on concert setlists."""
+
 import json
 import os
 
+import spotipy  # type: ignore
 from agents import Agent, function_tool
 from dotenv import load_dotenv
 from httpx import AsyncClient, QueryParams
 from pydantic import BaseModel
-import spotipy  # type: ignore
 from spotipy.oauth2 import SpotifyOAuth  # type: ignore
-
 
 load_dotenv(override=True)
 
 
 class SongItem(BaseModel):
+    """A song item with metadata."""
+
     song_name: str
     """The name of the song."""
 
@@ -24,6 +27,8 @@ class SongItem(BaseModel):
 
 
 class Setlist(BaseModel):
+    """A live concert setlist."""
+
     event_date: str
     """The date the event took place in string format."""
 
@@ -52,16 +57,19 @@ sp = spotipy.Spotify(
 
 @function_tool
 async def search_setlists(artists: list[str]) -> str:
-    """
-    Search Setlist FM for the most recent live concert setlists
-    for a given artist or list of artists. Multiple artists can be
-    provided if there are multiple artists performing at the same concert.
+    """Search Setlist FM for artist setlists.
+
+    Retrieve the most recent setlistsfor a given artist or list of artists.
+    Multiple artists can be provided if there are multiple artists performing
+    at the same concert.
 
     Args:
         artists (list[str]): A list of artist or band names to retrieve setlists for.
 
     Returns:
-        str: A formatted string containing the most recent setlists for the given artists.
+        str: A formatted string containing the most recent setlists for the given
+            artists.
+
     """
     if not SETLIST_FM_API_KEY:
         return "Setlist FM API key is not configured, unable to search for setlists."
@@ -105,16 +113,17 @@ async def _search_song(artist: str, song_name: str) -> SongItem | None:
 async def create_playlist(
     playlist_name: str, playlist_description: str, song_list: list[SongItem]
 ) -> str:
-    """
-    Create a Spotify playlist with the given name, description, and list of songs.
+    """Create a Spotify playlist with the given name, description, and list of songs.
 
     Args:
         playlist_name (str): The name of the playlist to create.
         playlist_description (str): A description for the playlist.
-        song_list (list[SongItem]): A list of SongItem objects representing the songs to add to the playlist.
+        song_list (list[SongItem]): A list of SongItem objects representing the songs to
+            add to the playlist.
 
     Returns:
         str: A message indicating the result of the playlist creation.
+
     """
     result = ""
     song_list_with_uris = []
@@ -126,7 +135,10 @@ async def create_playlist(
                 artist=song.artist_name, song_name=song.song_name
             )
             if not song_with_uri:
-                result += f"Could not find '{song.song_name}' by '{song.artist_name}' on Spotify.\n"
+                result += (
+                    f"Could not find '{song.song_name}' by '{song.artist_name}' "
+                    f"on Spotify.\n"
+                )
             else:
                 song_list_with_uris.append(song_with_uri)
     if len(song_list_with_uris) > 0:
@@ -140,7 +152,11 @@ async def create_playlist(
         playlist_id = playlist["id"]
         track_uris = [song.spotify_uri for song in song_list_with_uris]
         sp.playlist_add_items(playlist_id=playlist_id, items=track_uris)
-        result += f"Playlist '{playlist_name}' created successfully with {len(song_list_with_uris)} songs! You can view it here: {playlist['external_urls']['spotify']}\n"
+        result += (
+            f"Playlist '{playlist_name}' created successfully with "
+            f"{len(song_list_with_uris)} songs! You can view it here: "
+            f"{playlist['external_urls']['spotify']}\n"
+        )
     else:
         result += (
             "No valid songs found to add to the playlist. Playlist was not created.\n"
@@ -149,10 +165,12 @@ async def create_playlist(
 
 
 PLAYLIST_INSTRUCTIONS = """You are a playlist curator agent.
-Your task is to create a Spotify playlist based on a specific, upcoming live concert event.
-You will be provided with details about the concert event, including the artist(s) performing,
-the venue, and the date. Your job is to research the artist's most recent live concert setlist(s)
-and create a Spotify playlist that includes the songs performed at that event.
+Your task is to create a Spotify playlist based on a specific, upcoming live concert
+event.
+You will be provided with details about the concert event, including the artist(s)
+performing, the venue, and the date. Your job is to research the artist's most
+recent live concert setlist(s) and create a Spotify playlist that includes the songs
+performed at that event.
 You should use the 'search_setlists' tool to retrieve the setlist information
 and the 'create_playlist' tool to create the Spotify playlist.
 """
