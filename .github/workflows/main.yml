@@ -1,0 +1,37 @@
+name: CI Workflow for `main` branch
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  lint-and-type-check:
+    name: Run linter and type checker
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Setup Python
+      uses: actions/setup-python@v6
+      with:
+        python-version-file: "pyproject.toml"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.10"
+
+    - name: Install the project
+      run: uv sync --locked --all-groups
+
+    - name: Run Ruff linter
+      run: uv run ruff check
+
+    - name: Run Mypy type checker
+      run: uv run mypy src
