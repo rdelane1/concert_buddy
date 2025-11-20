@@ -1,14 +1,14 @@
 """FastAPI server for Concert Buddy agent workflow."""
 
-from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from dotenv import load_dotenv
 from agents import Runner
-from .progress import sse_event_stream
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 from .agents.manager_agent import manager_agent
+from .progress import sse_event_stream
 
 load_dotenv(override=True)
 
@@ -25,12 +25,16 @@ app.add_middleware(
 
 
 class ChatRequest(BaseModel):
+    """Request model for chat endpoint."""
+
     message: str
     previous_response_id: str | None = None
     session_id: str | None = None
 
 
 class ChatResponse(BaseModel):
+    """Response model for chat endpoint."""
+
     output: str
     last_response_id: str | None = None
 
@@ -72,4 +76,6 @@ async def health():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("src.concert_buddy.server:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "src.concert_buddy.server:app", host="localhost", port=8000, reload=True
+    )
