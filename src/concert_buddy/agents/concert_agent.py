@@ -6,6 +6,8 @@ from agents import Agent, ModelSettings, WebSearchTool
 from openai.types.shared import Reasoning
 from pydantic import BaseModel
 
+from ..hooks import LoggingHooks
+
 
 class Concert(BaseModel):
     """A live concert event."""
@@ -46,4 +48,5 @@ concert_agent = Agent(
     model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
     output_type=Concert,
     tools=[WebSearchTool()],
+    hooks=LoggingHooks(),
 )

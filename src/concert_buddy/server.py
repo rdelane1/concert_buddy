@@ -8,7 +8,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .agents.manager_agent import manager_agent
-from .hooks import LoggingHooks
 from .progress import sse_event_stream
 
 load_dotenv(override=True)
@@ -52,7 +51,6 @@ async def chat(req: ChatRequest):
     result = await Runner.run(
         starting_agent=manager_agent,
         input=prefixed_input,
-        hooks=LoggingHooks(),
         previous_response_id=req.previous_response_id,
     )
     return ChatResponse(

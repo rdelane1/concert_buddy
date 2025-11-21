@@ -28,7 +28,11 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
     if logger.handlers:
         return logger
 
-    # File handler - detailed logs
+    # Clear log file on first setup only
+    if LOG_FILE.exists():
+        LOG_FILE.unlink()  # Delete the file
+
+    # File handler - detailed logs (append mode)
     file_handler = logging.FileHandler(LOG_FILE)
     file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter(
