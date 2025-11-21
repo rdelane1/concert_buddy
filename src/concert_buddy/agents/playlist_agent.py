@@ -4,9 +4,10 @@ import json
 import os
 
 import spotipy  # type: ignore
-from agents import Agent, function_tool
+from agents import Agent, ModelSettings, function_tool
 from dotenv import load_dotenv
 from httpx import AsyncClient, QueryParams
+from openai.types.shared import Reasoning
 from pydantic import BaseModel
 from spotipy.oauth2 import SpotifyOAuth  # type: ignore
 
@@ -93,7 +94,17 @@ async def search_setlists(artists: list[str]) -> str:
     return results
 
 
-async def _search_song(artist: str, song_name: str) -> SongItem | None:
+async def get_spotify_track(artist: str, song_name: str) -> SongItem | None:
+    """Search Spotify for a track by artist and song name.
+
+    Args:
+        artist (str): The name of the artist.
+        song_name (str): The name of the song.
+
+    Returns:
+        SongItem | None: A SongItem object if found, otherwise None.
+
+    """
     query = f"artist:'{artist}' track:'{song_name}'"
     result = sp.search(q=query, type="track")
     tracks = result.get("tracks").get("items")
@@ -109,11 +120,61 @@ async def _search_song(artist: str, song_name: str) -> SongItem | None:
     return None
 
 
-@function_tool
-async def create_playlist(
+def get_spotify_artist_id(artist_name: str) -> str | None:
+    """Search Spotify for an artist to retrieve their Spotify ID.
+
+    Args:
+        artist_name (str): The name of the artist to search for.
+
+    Returns:
+        str | None: The Spotify ID of the artist, or None if not found.
+
+    """
+    result = sp.search(q=artist_name, type="artist", limit=1)
+    artists = result.get("artists").get("items")
+    if len(artists) > 0:
+        return artists[0].get("id")
+    return None
+
+
+def get_spotify_artist_top_tracks(artist_name: str) -> list[SongItem]:
+    """Retrieve the top 10 tracks for a given artist from Spotify.
+
+    Args:
+        artist_name (str): The name of the artist.
+
+    Returns:
+        list[SongItem]: A list of SongItem objects representing the top tracks of the
+            artist.
+
+    """
+    artist_id = get_spotify_artist_id(artist_name)
+    if not artist_id:
+        return []
+
+    try:
+        top_tracks_data = sp.artist_top_tracks(artist_id)
+        top_tracks = top_tracks_data.get("tracks", [])
+        if len(top_tracks) > 0:
+            return [
+                SongItem.model_validate(
+                    {
+                        "song_name": track.get("name"),
+                        "artist_name": artist_name,
+                        "spotify_uri": track.get("uri"),
+                    }
+                )
+                for track in top_tracks
+            ]
+        return []
+    except Exception:
+        return []
+
+
+def create_spotify_playlist(
     playlist_name: str, playlist_description: str, song_list: list[SongItem]
 ) -> str:
-    """Create a Spotify playlist with the given name, description, and list of songs.
+    """Create a Spotify playlist for the current user.
 
     Args:
         playlist_name (str): The name of the playlist to create.
@@ -125,59 +186,145 @@ async def create_playlist(
         str: A message indicating the result of the playlist creation.
 
     """
-    result = ""
-    song_list_with_uris = []
-    if len(song_list) == 0:
-        return "No songs provided to add to the playlist."
-    else:
-        for song in song_list:
-            song_with_uri = await _search_song(
-                artist=song.artist_name, song_name=song.song_name
-            )
-            if not song_with_uri:
-                result += (
-                    f"Could not find '{song.song_name}' by '{song.artist_name}' "
-                    f"on Spotify.\n"
-                )
-            else:
-                song_list_with_uris.append(song_with_uri)
-    if len(song_list_with_uris) > 0:
-        user_id = sp.me()["id"]
-        playlist = sp.user_playlist_create(
-            user=user_id,
-            name=playlist_name,
-            public=True,
-            description=playlist_description,
-        )
-        playlist_id = playlist["id"]
-        track_uris = [song.spotify_uri for song in song_list_with_uris]
-        sp.playlist_add_items(playlist_id=playlist_id, items=track_uris)
-        result += (
+    # Get current user's Spotify ID
+    user_id = sp.me()["id"]
+
+    # Create public playlist
+    playlist = sp.user_playlist_create(
+        user=user_id,
+        name=playlist_name,
+        public=True,
+        description=playlist_description,
+    )
+
+    # Add songs to the playlist
+    playlist_id = playlist["id"]
+    track_uris = [song.spotify_uri for song in song_list]
+    sp.playlist_add_items(playlist_id=playlist_id, items=track_uris)
+
+    # Validate songs added
+    playlist_data = sp.playlist(playlist_id)
+    playlist_size = playlist_data["tracks"]["total"]
+    if playlist_size > 0:
+        return (
             f"Playlist '{playlist_name}' created successfully with "
-            f"{len(song_list_with_uris)} songs! You can view it here: "
+            f"{playlist_size} songs! You can view it here: "
             f"{playlist['external_urls']['spotify']}\n"
         )
     else:
-        result += (
-            "No valid songs found to add to the playlist. Playlist was not created.\n"
+        return "Failed to add songs to the playlist.\n"
+
+
+@function_tool
+async def create_playlist_from_setlist(
+    playlist_name: str, playlist_description: str, song_list: list[SongItem]
+) -> str:
+    """Create a Spotify playlist based on a concert setlist.
+
+    Args:
+        playlist_name (str): The name of the playlist to create.
+        playlist_description (str): A description for the playlist.
+        song_list (list[SongItem]): A list of SongItem objects representing the songs to
+            add to the playlist.
+
+    Returns:
+        str: A message indicating the result of the playlist creation.
+
+    """
+    # Verify and enrich song list with Spotify URIs
+    enriched_song_list = []
+    for song in song_list:
+        spotify_song = await get_spotify_track(
+            artist=song.artist_name, song_name=song.song_name
         )
-    return result
+        if spotify_song:
+            enriched_song_list.append(spotify_song)
+
+    if not enriched_song_list:
+        return "No valid songs found to add to the playlist."
+
+    # Create the Spotify playlist
+    result_message = create_spotify_playlist(
+        playlist_name=playlist_name,
+        playlist_description=playlist_description,
+        song_list=enriched_song_list,
+    )
+    return result_message
 
 
-PLAYLIST_INSTRUCTIONS = """You are a playlist curator agent.
-Your task is to create a Spotify playlist based on a specific, upcoming live concert
-event.
-You will be provided with details about the concert event, including the artist(s)
-performing, the venue, and the date. Your job is to research the artist's most
-recent live concert setlist(s) and create a Spotify playlist that includes the songs
-performed at that event.
-You should use the 'search_setlists' tool to retrieve the setlist information
-and the 'create_playlist' tool to create the Spotify playlist.
+@function_tool
+async def create_playlist_from_artist_top_tracks(
+    playlist_name: str, playlist_description: str, artist_names: list[str]
+) -> str:
+    """Create a Spotify playlist based on an artist's top tracks.
+
+    Args:
+        playlist_name (str): The name of the playlist to create.
+        playlist_description (str): A description for the playlist.
+        artist_names (list[str]): A list of artist names whose top tracks to include.
+
+    Returns:
+        str: A message indicating the result of the playlist creation.
+
+    """
+    total_song_list = []
+    # Retrieve the artist's top tracks
+    for artist in artist_names:
+        top_tracks = get_spotify_artist_top_tracks(artist)
+        if not top_tracks:
+            return f"No top tracks found for artist '{artist}'."
+        total_song_list.extend(top_tracks)
+
+    if not total_song_list:
+        return "No valid top tracks found to add to the playlist."
+
+    # Create the Spotify playlist
+    result_message = create_spotify_playlist(
+        playlist_name=playlist_name,
+        playlist_description=playlist_description,
+        song_list=top_tracks,
+    )
+    return result_message
+
+
+PLAYLIST_INSTRUCTIONS = """You are a playlist curator agent specializing in creating
+Spotify playlists for upcoming concerts.
+
+Follow this procedure:
+
+1. **Search for setlists**: Use the 'search_setlists' tool to find recent live concert
+setlists for the performing artist(s). If multiple artists are requested
+(e.g., headlining artist and supporting acts), search for setlists for each artist.
+
+2. **Select best matching setlist**: For each artist, if setlists are found, analyze
+them and select the one that best matches the upcoming concert (consider factors like
+venue type, recent date, tour name, or similar context).
+
+3. **Create playlist from combined setlists**: Use the 'create_playlist_from_setlist'
+tool to create a Spotify playlist based on all selected setlists. Combine songs from
+all requested artists into a single list to give concert-goers an idea of what songs
+might be performed by each act.
+
+4. **Fallback to top tracks**: If no setlists are found for any artist, use the
+'create_playlist_from_artist_top_tracks' tool instead to create a playlist with the
+artist's most popular songs. For multiple artists, combine top tracks from all artists.
+
+When creating playlists, use descriptive names and descriptions that reference the
+upcoming concert, all performing artists, venue, and date. The goal is to help fans
+prepare for the live experience by familiarizing themselves with likely songs that will
+be performed by all acts on the bill.
 """
 
 playlist_agent = Agent(
     name="Playlist Agent",
     instructions=PLAYLIST_INSTRUCTIONS,
-    model="gpt-4.1",
-    tools=[search_setlists, create_playlist],
+    model="gpt-5.1",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(effort="none"),
+    ),
+    tools=[
+        search_setlists,
+        create_playlist_from_setlist,
+        create_playlist_from_artist_top_tracks,
+    ],
 )
