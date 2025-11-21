@@ -101,7 +101,7 @@ async def search_setlists(artists: list[str]) -> str:
                         event_date = datetime.strptime(
                             event_date_str, "%d-%m-%Y"
                         ).date()
-                        if event_date <= today:
+                        if event_date < today:
                             past_setlists.append(setlist)
                     except (ValueError, TypeError):
                         # If date parsing fails, skip this setlist
