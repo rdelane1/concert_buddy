@@ -1,11 +1,11 @@
-"""Logging hooks for agent run lifecycle events."""
+"""Logging hooks for agent lifecycle events."""
 
 from typing import Any, Optional
 
 from agents import (
     Agent,
+    AgentHooks,
     RunContextWrapper,
-    RunHooks,
     Tool,
     Usage,
 )
@@ -14,12 +14,8 @@ from agents.items import ModelResponse, TResponseInputItem
 from .config import logger
 
 
-class LoggingHooks(RunHooks):
-    """Hooks for monitoring agent run lifecycle events."""
-
-    def __init__(self):
-        """Initialize the logging hooks."""
-        pass
+class LoggingHooks(AgentHooks):
+    """Hooks for monitoring agent lifecycle events."""
 
     def _usage_to_str(self, usage: Usage) -> str:
         """Convert token Usage object to a formatted string."""
@@ -28,7 +24,7 @@ class LoggingHooks(RunHooks):
             f"{usage.output_tokens} output tokens, {usage.total_tokens} total tokens"
         )
 
-    async def on_agent_start(self, context: RunContextWrapper, agent: Agent) -> None:
+    async def on_start(self, context: RunContextWrapper, agent: Agent) -> None:
         """Call before the agent is invoked."""
         logger.info(
             "(%s) Agent %s started. Usage: %s",
@@ -57,7 +53,7 @@ class LoggingHooks(RunHooks):
             "(%s) LLM ended. Usage: %s", agent.name, self._usage_to_str(context.usage)
         )
 
-    async def on_agent_end(
+    async def on_end(
         self, context: RunContextWrapper, agent: Agent, output: Any
     ) -> None:
         """Call when the agent produces a final output."""

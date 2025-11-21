@@ -5,6 +5,8 @@ from datetime import datetime
 from agents import Agent, ModelSettings, WebSearchTool
 from openai.types.shared import Reasoning
 
+from ..hooks import LoggingHooks
+
 # A sub-agent specializing on searching for concert tickets
 TICKET_INSTRUCTIONS = f"""You are a concert ticket agent.
 You are skilled in navigating the web to find concert ticket information.
@@ -26,4 +28,5 @@ ticket_agent = Agent(
     model="gpt-5",
     model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
     tools=[WebSearchTool()],
+    hooks=LoggingHooks(),
 )

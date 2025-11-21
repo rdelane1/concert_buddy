@@ -3,6 +3,7 @@
 from agents import Agent, ModelSettings
 from openai.types.shared import Reasoning
 
+from ..hooks import LoggingHooks
 from ..progress import report_todos, update_todo
 from .concert_agent import concert_agent
 from .playlist_agent import playlist_agent
@@ -81,4 +82,5 @@ manager_agent = Agent(
         report_todos,
         update_todo,
     ],
+    hooks=LoggingHooks(),
 )

@@ -11,6 +11,8 @@ from openai.types.shared import Reasoning
 from pydantic import BaseModel
 from spotipy.oauth2 import SpotifyOAuth  # type: ignore
 
+from ..hooks import LoggingHooks
+
 load_dotenv(override=True)
 
 
@@ -327,4 +329,5 @@ playlist_agent = Agent(
         create_playlist_from_setlist,
         create_playlist_from_artist_top_tracks,
     ],
+    hooks=LoggingHooks(),
 )
