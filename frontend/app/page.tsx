@@ -15,6 +15,39 @@ interface TodoItem {
   message?: string | null;
 }
 
+// Convert URLs in plain text to clickable <a> elements.
+function linkify(text: string) {
+  // Regex matches http/https URLs stopping before trailing punctuation.
+  const urlPattern = /(https?:\/\/[^\s)]+)([)\.,!?]?)/g;
+  const elements: (string | JSX.Element)[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = urlPattern.exec(text)) !== null) {
+    const [full, url, trailing] = match;
+    // Push preceding text
+    if (match.index > lastIndex) {
+      elements.push(text.slice(lastIndex, match.index));
+    }
+    elements.push(
+      <a
+        key={elements.length}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline decoration-primary-500 hover:text-primary-600 break-words"
+      >
+        {url}
+      </a>
+    );
+    if (trailing) elements.push(trailing);
+    lastIndex = match.index + full.length;
+  }
+  if (lastIndex < text.length) {
+    elements.push(text.slice(lastIndex));
+  }
+  return elements;
+}
+
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -166,7 +199,7 @@ export default function Chat() {
                 }`}
               >
                 <div className="whitespace-pre-wrap break-words">
-                  {message.content}
+                  {linkify(message.content)}
                 </div>
               </div>
             </div>
