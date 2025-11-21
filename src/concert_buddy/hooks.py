@@ -11,6 +11,8 @@ from agents import (
 )
 from agents.items import ModelResponse, TResponseInputItem
 
+from .config import logger
+
 
 class LoggingHooks(RunHooks):
     """Hooks for monitoring agent run lifecycle events."""
@@ -28,9 +30,11 @@ class LoggingHooks(RunHooks):
 
     async def on_agent_start(self, context: RunContextWrapper, agent: Agent) -> None:
         """Call before the agent is invoked."""
-        print(
-            f"({agent.name}) Agent {agent.name} started. "
-            f"Usage: {self._usage_to_str(context.usage)}"
+        logger.info(
+            "(%s) Agent %s started. Usage: %s",
+            agent.name,
+            agent.name,
+            self._usage_to_str(context.usage),
         )
 
     async def on_llm_start(
@@ -41,51 +45,67 @@ class LoggingHooks(RunHooks):
         input_items: list[TResponseInputItem],
     ) -> None:
         """Call just before invoking the LLM for the agent."""
-        print(f"({agent.name}) LLM started. Usage: {self._usage_to_str(context.usage)}")
+        logger.info(
+            "(%s) LLM started. Usage: %s", agent.name, self._usage_to_str(context.usage)
+        )
 
     async def on_llm_end(
         self, context: RunContextWrapper, agent: Agent, response: ModelResponse
     ) -> None:
         """Call immediately after the LLM call returns for the agent."""
-        print(f"({agent.name}) LLM ended. Usage: {self._usage_to_str(context.usage)}")
+        logger.info(
+            "(%s) LLM ended. Usage: %s", agent.name, self._usage_to_str(context.usage)
+        )
 
     async def on_agent_end(
         self, context: RunContextWrapper, agent: Agent, output: Any
     ) -> None:
         """Call when the agent produces a final output."""
-        print(
-            f"({agent.name}) Agent {agent.name} ended with "
-            f"output {output}. Usage: {self._usage_to_str(context.usage)}"
+        logger.info(
+            "(%s) Agent %s ended with output %s. Usage: %s",
+            agent.name,
+            agent.name,
+            output,
+            self._usage_to_str(context.usage),
         )
 
     async def on_tool_start(
         self, context: RunContextWrapper, agent: Agent, tool: Tool
     ) -> None:
         """Call immediately before a local tool is invoked."""
-        print(
-            f"({agent.name}) Tool {tool.name} started. "
-            f"name={context.tool_name}, call_id={context.tool_call_id}, "  # type: ignore[attr-defined]
-            f"args={context.tool_arguments}. "  # type: ignore[attr-defined]
-            f"Usage: {self._usage_to_str(context.usage)}"
+        logger.info(
+            "(%s) Tool %s started. name=%s, call_id=%s, args=%s. Usage: %s",
+            agent.name,
+            tool.name,
+            context.tool_name,  # type: ignore[attr-defined]
+            context.tool_call_id,  # type: ignore[attr-defined]
+            context.tool_arguments,  # type: ignore[attr-defined]
+            self._usage_to_str(context.usage),
         )
 
     async def on_tool_end(
         self, context: RunContextWrapper, agent: Agent, tool: Tool, result: str
     ) -> None:
         """Call immediately after a local tool is invoked."""
-        print(
-            f"({agent.name}) Tool {tool.name} finished. "
-            f"result={result}, name={context.tool_name}, "  # type: ignore[attr-defined]
-            f"call_id={context.tool_call_id}, "  # type: ignore[attr-defined]
-            f"args={context.tool_arguments}. "  # type: ignore[attr-defined]
-            f"Usage: {self._usage_to_str(context.usage)}"
+        logger.info(
+            "(%s) Tool %s finished. result=%s, name=%s, call_id=%s, args=%s. Usage: %s",
+            agent.name,
+            tool.name,
+            result,
+            context.tool_name,  # type: ignore[attr-defined]
+            context.tool_call_id,  # type: ignore[attr-defined]
+            context.tool_arguments,  # type: ignore[attr-defined]
+            self._usage_to_str(context.usage),
         )
 
     async def on_handoff(
         self, context: RunContextWrapper, from_agent: Agent, to_agent: Agent
     ) -> None:
         """Call when a handoff occurs."""
-        print(
-            f"({from_agent.name}) Handoff from {from_agent.name} to "
-            f"{to_agent.name}. Usage: {self._usage_to_str(context.usage)}"
+        logger.info(
+            "(%s) Handoff from %s to %s. Usage: %s",
+            from_agent.name,
+            from_agent.name,
+            to_agent.name,
+            self._usage_to_str(context.usage),
         )
