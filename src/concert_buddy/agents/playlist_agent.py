@@ -2,6 +2,7 @@
 
 import json
 import os
+from datetime import datetime
 
 import spotipy  # type: ignore
 from agents import Agent, ModelSettings, function_tool
@@ -88,9 +89,33 @@ async def search_setlists(artists: list[str]) -> str:
             if not setlists:
                 results += f"**No setlists found for {artist}.**\n"
                 continue
+
+            # Filter out future setlists (only keep past/present events)
+            today = datetime.now().date()
+            past_setlists = []
+            for setlist in setlists:
+                event_date_str = setlist.get("eventDate")
+                if event_date_str:
+                    try:
+                        # Parse date format: "DD-MM-YYYY"
+                        event_date = datetime.strptime(
+                            event_date_str, "%d-%m-%Y"
+                        ).date()
+                        if event_date <= today:
+                            past_setlists.append(setlist)
+                    except (ValueError, TypeError):
+                        # If date parsing fails, skip this setlist
+                        continue
+
+            if not past_setlists:
+                results += f"**No past setlists found for {artist}.**\n"
+                continue
+
             results += (
                 f"**Most recent setlists for {artist}:**\n"
-                + "\n".join(json.dumps(setlist, indent=2) for setlist in setlists[:3])
+                + "\n".join(
+                    json.dumps(setlist, indent=2) for setlist in past_setlists[:10]
+                )
                 + "\n"
             )
     return results
