@@ -325,6 +325,6 @@ playlist_agent = Agent(
     tools=[
         search_setlists,
         create_playlist_from_setlist,
-        create_playlist_from_artist_top_tracks
+        create_playlist_from_artist_top_tracks,
     ],
 )
