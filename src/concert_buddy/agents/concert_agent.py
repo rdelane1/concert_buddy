@@ -6,8 +6,10 @@ from agents import Agent, ModelSettings, WebSearchTool
 from openai.types.shared import Reasoning
 from pydantic import BaseModel
 
+from ..core.config import get_settings
 from ..hooks import LoggingHooks
 
+app_settings = get_settings()
 
 class Concert(BaseModel):
     """A live concert event."""
@@ -44,8 +46,11 @@ is {datetime.now().strftime("%B %d, %Y")}.
 concert_agent = Agent(
     name="Concert Agent",
     instructions=CONCERT_INSTRUCTIONS,
-    model="gpt-5",
-    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+    model=app_settings.concert_agent_model,
+    model_settings=ModelSettings(
+        reasoning=Reasoning(effort=app_settings.concert_agent_reasoning_effort),
+        verbosity=app_settings.concert_agent_verbosity
+    ),
     output_type=Concert,
     tools=[WebSearchTool()],
     hooks=LoggingHooks(),

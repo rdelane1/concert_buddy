@@ -1,7 +1,6 @@
 """FastAPI server for Concert Buddy agent workflow."""
 
-from agents import Runner
-from dotenv import load_dotenv
+from agents import Runner, set_default_openai_key
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -9,15 +8,21 @@ from pydantic import BaseModel
 
 from .agents.manager_agent import manager_agent
 from .progress import sse_event_stream
+from .core.config import get_settings
 
-load_dotenv(override=True)
+app_settings = get_settings()
 
-app = FastAPI(title="Concert Buddy API")
+set_default_openai_key(app_settings.openai_api_key)
+
+app = FastAPI(
+    title=app_settings.title,
+    version=app_settings.version,
+)
 
 # Enable CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=app_settings.allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -77,5 +82,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "src.concert_buddy.server:app", host="localhost", port=8000, reload=True
+        "src.concert_buddy.server:app",
+        host=app_settings.uvicorn_host,
+        port=app_settings.uvicorn_port,
+        reload=True,
     )

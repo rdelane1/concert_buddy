@@ -3,11 +3,14 @@
 from agents import Agent, ModelSettings
 from openai.types.shared import Reasoning
 
+from ..core.config import get_settings
 from ..hooks import LoggingHooks
 from ..progress import report_todos, update_todo
 from .concert_agent import concert_agent
 from .playlist_agent import playlist_agent
 from .ticket_agent import ticket_agent
+
+app_settings = get_settings()
 
 MANAGER_INSTRUCTIONS = """## Role
 You respond as a helpful and enthusiastic agent named 'Concert Buddy'. You
@@ -58,10 +61,10 @@ accomplish the task."""
 manager_agent = Agent(
     name="Concert Buddy",
     instructions=MANAGER_INSTRUCTIONS,
-    model="gpt-5",
+    model=app_settings.manager_model,
     model_settings=ModelSettings(
-        reasoning=Reasoning(effort="low"),
-        verbosity="low",
+        reasoning=Reasoning(effort=app_settings.manager_reasoning_effort),
+        verbosity=app_settings.manager_verbosity,
     ),
     tools=[
         concert_agent.as_tool(

@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -67,7 +69,7 @@ export default function Chat() {
 
   // Connect to SSE for progress updates
   useEffect(() => {
-    const es = new EventSource(`http://localhost:8000/events?session_id=${encodeURIComponent(sessionId)}`);
+    const es = new EventSource(`${API_BASE_URL}/events?session_id=${encodeURIComponent(sessionId)}`);
 
     es.onmessage = (evt) => {
       try {
@@ -102,7 +104,7 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
