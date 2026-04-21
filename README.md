@@ -1,138 +1,129 @@
 # Concert Buddy
 
-An AI assistant to help plan for attending live concerts. Concert Buddy helps you discover upcoming shows, find tickets, and create personalized Spotify playlists based on artist setlists.
+Concert Buddy is an AI-powered concert planning assistant that helps you prep for your next live concert experience. Whether you want to find upcoming concerts, compare ticket options, or build a playlist based on likely setlists, Concert Buddy gives you one place to do it.
 
-## Prerequisites
+- :robot: **Discover upcoming concerts** with AI-assisted search
+- :ticket: **Find ticket information** from trusted ticket sources
+- :musical_note: **Generate Spotify playlists automatically** based on recent live setlists
 
-Before getting started, you'll need:
+## How It Works
 
-- **Python 3.12+** - Required for the backend server
-- **Node.js 18+** - Required for the Next.js frontend
-- **uv** - Fast Python package installer and resolver
-- **API Keys**:
-  - OpenAI API key (for AI agent functionality)
-  - Spotify API credentials (Client ID, Client Secret)
-  - Setlist.fm API key (for concert setlist data)
+Concert Buddy is powered by a team of specialized agents built using the [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/).
 
-## Getting Started with uv
+These agents are integrated with external music and live-event services:
+- [setlist.fm](https://www.setlist.fm/) is used to retreive data for recent live performance setlists.
+- Currently supports [Spotify](https://open.spotify.com/) integration for automatic Spotify playlist creation.
 
-This project uses [uv](https://github.com/astral-sh/uv) for fast and reliable Python dependency management.
+Together, these pieces let Concert Buddy move from a simple user request to a practical concert-preparation workflow: discover a show, gather ticket info, and generate a playlist based on recent live performances.
 
-### Installing uv
+## Getting Started
 
-**macOS/Linux:**
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+Before getting started, you will need to setup and gather your credentials for the following APIs:
+  - [OpenAI](https://platform.openai.com/)
+  - [setlist.fm](https://api.setlist.fm/docs/1.0/index.html)
+  - [Spotify](https://developer.spotify.com/documentation/web-api)
 
-**Windows:**
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
+The repository includes an example environment file at [`.env.example`](.env.example).
 
-## Setting Up the Environment
+### 1. Copy the example file
 
-### 1. Clone the Repository
-
-```bash
-git clone <your-repo-url>
-cd concert_buddy
-```
-
-### 2. Set Up Environment Variables
-
-Copy the example environment file and fill in your API keys:
+From the project root, run:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your API credentials:
+### 2. Fill in your credentials
+
+Edit [`.env`](.env) and provide real values for all required keys:
 
 ```env
-# OpenAI API Key
-# Get your key from: https://platform.openai.com/api-keys
-OPENAI_API_KEY=sk-your-openai-api-key-here
-
-# Setlist.fm API Key
-# Register at: https://api.setlist.fm/docs/1.0/index.html
-SETLIST_FM_API_KEY=your-setlistfm-api-key-here
-
-# Spotify API Credentials
-# Create an app at: https://developer.spotify.com/dashboard
-SPOTIFY_CLIENT_ID=your-spotify-client-id-here
-SPOTIFY_CLIENT_SECRET=your-spotify-client-secret-here
-
-# Spotify Redirect URI (for OAuth)
-# This can be any valid URI (does not need to be accessible)
+OPENAI_API_KEY=sk-your-openai-api-key
+SETLIST_FM_API_KEY=your-setlistfm-api-key
+SPOTIFY_CLIENT_ID=your-spotify-client-id
+SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000
 ```
 
-### 3. Install Backend Dependencies
+### 3. Run with Docker
 
-Using uv, sync all Python dependencies:
+From the project root, run:
+
+```bash
+docker compose up --build
+```
+
+### 4. Stop the containers
+
+To stop the app:
+
+```bash
+docker compose down
+```
+
+## Local Development Without Docker
+
+### 1. Install backend dependencies
+
+This project uses [`uv`](pyproject.toml) for Python dependency management.
+
+Install dependencies from the project root:
 
 ```bash
 uv sync
 ```
 
-This will:
-- Create a virtual environment in `.venv/`
-- Install all dependencies from `pyproject.toml`
-- Generate/update the lock file for reproducible builds
+### 2. Install frontend dependencies
 
-### 4. Install Frontend Dependencies
-
-Navigate to the frontend directory and install dependencies:
+From [`frontend/`](frontend):
 
 ```bash
-cd frontend
 npm install
 ```
 
-## Running the Application
+### 3. Setup environment files
 
-### Backend Server
+From the project root, run:
+
+```bash
+cp .env.example .env
+```
+
+From [`frontend/`](frontend), run:
+
+```bash
+cp .env.example .env
+```
+
+Populate both files.
+
+### 4. Run the backend
 
 From the project root:
 
 ```bash
-# Run the FastAPI server
 uv run uvicorn src.concert_buddy.server:app --reload --port 8000
 ```
 
-The backend API will be available at `http://localhost:8000`
+The backend will be available at:
 
-### Frontend Development Server
+- `http://localhost:8000`
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
-In a separate terminal, from the `frontend/` directory:
+### 5. Run the frontend
+
+From [`frontend/`](frontend):
 
 ```bash
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`
+The frontend will be available at:
 
-## API Documentation
+- `http://localhost:3000`
 
-Once the backend is running, you can access the interactive API documentation at:
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+## Notes
 
-## Project Structure
-
-```
-concert_buddy/
-├── src/
-│   └── concert_buddy/
-│       ├── server.py          # FastAPI application
-│       ├── agents/            # AI agent implementations
-│       └── config/            # Configuration files
-├── frontend/
-│   ├── app/                   # Next.js App Router
-│   └── package.json           # Frontend dependencies
-├── pyproject.toml             # Python dependencies
-├── .env.example               # Environment variables template
-└── README.md                  # This file
-```
+- :rotating_light: Keep [`.env`](.env) private and never commit real secrets
