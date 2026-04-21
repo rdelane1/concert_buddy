@@ -5,7 +5,10 @@ from datetime import datetime
 from agents import Agent, ModelSettings, WebSearchTool
 from openai.types.shared import Reasoning
 
+from ..core.config import get_settings
 from ..hooks import LoggingHooks
+
+app_settings = get_settings()
 
 # A sub-agent specializing on searching for concert tickets
 TICKET_INSTRUCTIONS = f"""You are a concert ticket agent.
@@ -25,8 +28,11 @@ For reference, today's date is {datetime.now().strftime("%B %d, %Y")}.
 ticket_agent = Agent(
     name="Ticket Agent",
     instructions=TICKET_INSTRUCTIONS,
-    model="gpt-5",
-    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+    model=app_settings.ticket_agent_model,
+    model_settings=ModelSettings(
+        reasoning=Reasoning(effort=app_settings.ticket_agent_reasoning_effort),
+        verbosity=app_settings.ticket_agent_verbosity,
+    ),
     tools=[WebSearchTool()],
     hooks=LoggingHooks(),
 )

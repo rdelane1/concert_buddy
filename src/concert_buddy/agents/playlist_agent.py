@@ -6,15 +6,15 @@ from datetime import datetime
 
 import spotipy  # type: ignore
 from agents import Agent, ModelSettings, function_tool
-from dotenv import load_dotenv
 from httpx import AsyncClient, QueryParams
 from openai.types.shared import Reasoning
 from pydantic import BaseModel
 from spotipy.oauth2 import SpotifyOAuth  # type: ignore
 
+from ..core.config import get_settings
 from ..hooks import LoggingHooks
 
-load_dotenv(override=True)
+app_settings = get_settings()
 
 
 class SongItem(BaseModel):
@@ -47,13 +47,13 @@ class Setlist(BaseModel):
 
 
 SETLIST_FM_URL = "https://api.setlist.fm/rest/1.0"
-SETLIST_FM_API_KEY = os.getenv("SETLIST_FM_API_KEY")
+SETLIST_FM_API_KEY = app_settings.setlist_fm_api_key
 
 sp = spotipy.Spotify(
     auth_manager=SpotifyOAuth(
-        client_id=os.getenv("SPOTIFY_CLIENT_ID"),
-        client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
-        redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
+        client_id=app_settings.spotify_client_id,
+        client_secret=app_settings.spotify_client_secret,
+        redirect_uri=app_settings.spotify_redirect_uri,
         scope="playlist-modify-public",
     )
 )
@@ -345,9 +345,10 @@ be performed by all acts on the bill.
 playlist_agent = Agent(
     name="Playlist Agent",
     instructions=PLAYLIST_INSTRUCTIONS,
-    model="gpt-5.1",
+    model=app_settings.playlist_agent_model,
     model_settings=ModelSettings(
-        reasoning=Reasoning(effort="none"),
+        reasoning=Reasoning(effort=app_settings.playlist_agent_reasoning_effort),
+        verbosity=app_settings.playlist_agent_verbosity,
     ),
     tools=[
         search_setlists,

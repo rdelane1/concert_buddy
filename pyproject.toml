@@ -8,6 +8,7 @@ dependencies = [
     "fastapi>=0.121.1",
     "httpx>=0.28.1",
     "openai-agents>=0.3.3",
+    "pydantic-settings>=2.11.0",
     "python-dotenv>=1.1.1",
     "requests>=2.32.5",
     "spotipy>=2.25.1",

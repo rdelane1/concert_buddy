@@ -11,7 +11,7 @@ from agents import (
 )
 from agents.items import ModelResponse, TResponseInputItem
 
-from .config import logger
+from .core import logger
 
 
 class LoggingHooks(AgentHooks):
