@@ -9,6 +9,6 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 8080
 
-CMD ["npm", "run", "start"]
+CMD ["sh", "-c", "npm run start -- --port ${PORT:-8080}"]

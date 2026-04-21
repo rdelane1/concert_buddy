@@ -131,7 +131,7 @@ export default function Chat() {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
         role: "assistant",
-        content: "Sorry, I encountered an error. Please make sure the backend server is running on http://localhost:8000",
+        content: `Sorry, I encountered an error. Please make sure the backend server is running on ${API_BASE_URL}`,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {

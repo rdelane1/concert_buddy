@@ -4,13 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8080"
     env_file:
       - .env
-    environment:
-      UVICORN_HOST: 0.0.0.0
-      UVICORN_PORT: 8000
-      ALLOW_ORIGINS: '["http://localhost:3000"]'
 
   frontend:
     build:
@@ -19,6 +15,6 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:3000"
+      - "3000:8080"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://backend:8000
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
