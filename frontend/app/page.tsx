@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -69,7 +67,7 @@ export default function Chat() {
 
   // Connect to SSE for progress updates
   useEffect(() => {
-    const es = new EventSource(`${API_BASE_URL}/events?session_id=${encodeURIComponent(sessionId)}`);
+    const es = new EventSource(`/api/events?session_id=${encodeURIComponent(sessionId)}`);
 
     es.onmessage = (evt) => {
       try {
@@ -104,7 +102,7 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/chat`, {
+      const response = await fetch(`/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -131,7 +129,8 @@ export default function Chat() {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
         role: "assistant",
-        content: `Sorry, I encountered an error. Please make sure the backend server is running on ${API_BASE_URL}`,
+        content:
+          "Sorry, I encountered an error. Please make sure the backend server is running and reachable through the frontend proxy.",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
