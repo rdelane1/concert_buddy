@@ -11,6 +11,7 @@ from ..hooks import LoggingHooks
 
 app_settings = get_settings()
 
+
 class Concert(BaseModel):
     """A live concert event."""
 
@@ -49,7 +50,7 @@ concert_agent = Agent(
     model=app_settings.concert_agent_model,
     model_settings=ModelSettings(
         reasoning=Reasoning(effort=app_settings.concert_agent_reasoning_effort),
-        verbosity=app_settings.concert_agent_verbosity
+        verbosity=app_settings.concert_agent_verbosity,
     ),
     output_type=Concert,
     tools=[WebSearchTool()],

@@ -7,8 +7,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .agents.manager_agent import manager_agent
-from .progress import sse_event_stream
 from .core.config import get_settings
+from .progress import sse_event_stream
 
 app_settings = get_settings()
 

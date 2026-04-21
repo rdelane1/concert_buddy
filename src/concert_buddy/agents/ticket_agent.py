@@ -31,7 +31,7 @@ ticket_agent = Agent(
     model=app_settings.ticket_agent_model,
     model_settings=ModelSettings(
         reasoning=Reasoning(effort=app_settings.ticket_agent_reasoning_effort),
-        verbosity=app_settings.ticket_agent_verbosity
+        verbosity=app_settings.ticket_agent_verbosity,
     ),
     tools=[WebSearchTool()],
     hooks=LoggingHooks(),

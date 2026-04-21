@@ -21,6 +21,7 @@ def _resolve_env_file() -> Path:
 
     return (project_root / env_path).resolve()
 
+
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
@@ -56,6 +57,7 @@ class Settings(BaseSettings):
     playlist_agent_model: str = "gpt-5"
     playlist_agent_reasoning_effort: str = "low"
     playlist_agent_verbosity: str = "low"
+
 
 # Cache settings instance to avoid reloading environment variables multiple times
 @lru_cache(maxsize=1)

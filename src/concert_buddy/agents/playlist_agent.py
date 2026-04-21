@@ -16,6 +16,7 @@ from ..hooks import LoggingHooks
 
 app_settings = get_settings()
 
+
 class SongItem(BaseModel):
     """A song item with metadata."""
 
@@ -347,7 +348,7 @@ playlist_agent = Agent(
     model=app_settings.playlist_agent_model,
     model_settings=ModelSettings(
         reasoning=Reasoning(effort=app_settings.playlist_agent_reasoning_effort),
-        verbosity=app_settings.playlist_agent_verbosity
+        verbosity=app_settings.playlist_agent_verbosity,
     ),
     tools=[
         search_setlists,
