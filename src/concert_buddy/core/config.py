@@ -3,8 +3,14 @@
 from functools import lru_cache
 from os import getenv
 from pathlib import Path
+from typing import Literal, TypeAlias
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ReasoningEffort: TypeAlias = Literal[
+    "none", "minimal", "low", "medium", "high", "xhigh"
+]
+VerbosityLevel: TypeAlias = Literal["low", "medium", "high"]
 
 
 def _resolve_env_file() -> Path:
@@ -27,6 +33,7 @@ class Settings(BaseSettings):
 
     # Load from .env file
     model_config = SettingsConfigDict(
+        env_file=str(_resolve_env_file()),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         extra="allow",
@@ -41,26 +48,33 @@ class Settings(BaseSettings):
     uvicorn_host: str = "localhost"
     uvicorn_port: int = 8000
 
+    # External API credentials
+    openai_api_key: str = ""
+    setlist_fm_api_key: str = ""
+    spotify_client_id: str = ""
+    spotify_client_secret: str = ""
+    spotify_redirect_uri: str = ""
+
     # Agent settings
     manager_model: str = "gpt-5"
-    manager_reasoning_effort: str = "low"
-    manager_verbosity: str = "low"
+    manager_reasoning_effort: ReasoningEffort = "low"
+    manager_verbosity: VerbosityLevel = "low"
 
     concert_agent_model: str = "gpt-5"
-    concert_agent_reasoning_effort: str = "low"
-    concert_agent_verbosity: str = "low"
+    concert_agent_reasoning_effort: ReasoningEffort = "low"
+    concert_agent_verbosity: VerbosityLevel = "low"
 
     ticket_agent_model: str = "gpt-5"
-    ticket_agent_reasoning_effort: str = "low"
-    ticket_agent_verbosity: str = "low"
+    ticket_agent_reasoning_effort: ReasoningEffort = "low"
+    ticket_agent_verbosity: VerbosityLevel = "low"
 
     playlist_agent_model: str = "gpt-5"
-    playlist_agent_reasoning_effort: str = "low"
-    playlist_agent_verbosity: str = "low"
+    playlist_agent_reasoning_effort: ReasoningEffort = "low"
+    playlist_agent_verbosity: VerbosityLevel = "low"
 
 
 # Cache settings instance to avoid reloading environment variables multiple times
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """Return cached application settings loaded from environment variables."""
-    return Settings(_env_file=_resolve_env_file(), _env_file_encoding="utf-8")
+    return Settings()
